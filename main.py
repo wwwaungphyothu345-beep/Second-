@@ -9,8 +9,7 @@ ai_brain = AIAgentBrain()
 tg_manager = TelegramManager()
 
 FB_PAGE_ACCESS_TOKEN = "မင်းရဲ့_FACEBOOK_PAGE_ACCESS_TOKEN"
-FB_VERIFY_TOKEN = "မင်းသတ်မှတ်မည့်_အိုင်ဒီလျှို့ဝှက်ချက်_TOKEN" # ဥပမာ- my_secret_agent_123
-
+FB_VERIFY_TOKEN = "aung_phyo_thu_123"
 def send_fb_message(recipient_id, text_message):
     """Facebook Customer ထံသို့ စာလှမ်းပြန်သည့် Function"""
     url = f"https://graph.facebook.com/v19.0/me/messages?access_token={FB_PAGE_ACCESS_TOKEN}"

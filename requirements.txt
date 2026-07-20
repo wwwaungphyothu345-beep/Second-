@@ -53,3 +53,5 @@ wheel==0.46.3
 yarl==1.24.2
 gspread==6.1.0
 
+google-generativeai
+httpx

@@ -34,15 +34,13 @@ def generate_ai_response(user_message):
         response = model.generate_content(f"{context}\n\nCustomer: {user_message}")
         return response.text
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print("====== !!! DETAILED AI ERROR !!! ======")
-        print(error_details)
-        print("=======================================")
-        return "ခဏနေမှ ပြန်စာပို့ပေးပါဦးခင်ဗျာ။"
-        print(f"Gemini Error: {e}")
-        return "ခဏနေမှ ပြန်စာပို့ပေးပါဦးခင်ဗျာ။"
-
+     import traceback
+     error_details = traceback.format_exc()
+     print("====== !!! DETAILED AI ERROR !!! ======")
+     print(error_details)
+     print("=======================================")
+     return "ခဏနေမှ ပြန်စာပို့ပေးပါဦးခင်ဗျာ။"
+    
 async def send_fb_message(recipient_id, text):
     url = f"https://graph.facebook.com/v19.0/me/messages?access_token={FB_PAGE_TOKEN}"
     payload = {

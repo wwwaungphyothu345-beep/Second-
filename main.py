@@ -36,7 +36,7 @@ def generate_ai_response(user_message):
         context += f"ဆိုင်၏ ဘဏ်အကောင့်များ- {str(bank_accounts)}\n"
         context += "Customer ကို ယဉ်ကျေးပျူငှာစွာ မြန်မာလို စကားပြန်ပေးပါ။ ပစ္စည်းဈေးနှုန်းနှင့် အချက်အလက်များကို အပေါ်က Context အတိုင်းသာ မှန်ကန်စွာ ဖြေကြားပေးပါ။"
 
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(f"{context}\n\nCustomer: {user_message}")
         return response.text
     except Exception as e:

@@ -9,24 +9,18 @@ import google.generativeai as genai
 app = FastAPI()
 sheet_manager = SheetManager()
 
-# Render Environment Variables များမှ သော့ချက်များ ထုတ်ယူခြင်း
 VERIFY_TOKEN = "my_super_secret_token_123"
 FB_PAGE_TOKEN = os.environ.get("FACEBOOK_PAGE_ACCESS_TOKEN")
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 
-# Gemini AI ကို Configure လုပ်ခြင်း
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
 
-# --- AI Logic: Customer စာကို ဖတ်ပြီး Google Sheet ဒေတာ သုံး၍ ပြန်ဖြေပေးမည့်အပိုင်း ---
 def generate_ai_response(user_message):
     try:
-        # ၁။ Google Sheet ထဲက ပစ္စည်းစာရင်းကို ယူခြင်း
         products = sheet_manager.search_product(user_message)
         bank_accounts = sheet_manager.get_bank_accounts()
-        
-        # ၂။ AI အတွက် System Instruction သတ်မှတ်ခြင်း (Context ပေးခြင်း)
         context = f"မင်္ဂလာပါ။ သင်သည် လူကြီးမင်း၏ ဆိုင်အတွက် AI အရောင်းကိုယ်စားလှယ် ဖြစ်သည်။\n"
         if products:
             context += f"ရှာဖွေတွေ့ရှိသော ပစ္စည်းအချက်အလက်များ- {str(products)}\n"
@@ -40,10 +34,15 @@ def generate_ai_response(user_message):
         response = model.generate_content(f"{context}\n\nCustomer: {user_message}")
         return response.text
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print("====== !!! DETAILED AI ERROR !!! ======")
+        print(error_details)
+        print("=======================================")
+        return "ခဏနေမှ ပြန်စာပို့ပေးပါဦးခင်ဗျာ။"
         print(f"Gemini Error: {e}")
         return "ခဏနေမှ ပြန်စာပို့ပေးပါဦးခင်ဗျာ။"
 
-# --- Facebook Messenger API: စာပြန်ပို့မည့် Function ---
 async def send_fb_message(recipient_id, text):
     url = f"https://graph.facebook.com/v19.0/me/messages?access_token={FB_PAGE_TOKEN}"
     payload = {
@@ -53,7 +52,6 @@ async def send_fb_message(recipient_id, text):
     async with httpx.AsyncClient() as client:
         await client.post(url, json=payload)
 
-# --- Facebook Webhook Endpoints ---
 @app.get("/webhook")
 def verify_webhook(request: Request):
     params = request.query_params
@@ -71,12 +69,10 @@ async def handle_fb_webhook(request: Request):
                     sender_id = messaging_event["sender"]["id"]
                     user_text = messaging_event["message"]["text"]
                     
-                    # Gemini ဖြင့် စာသားထုတ်လုပ်ပြီး တိုက်ရိုက် စာပြန်ခြင်း
-                    ai_reply = generate_ai_response(user_text)
+                     ai_reply = generate_ai_response(user_text)
                     await send_fb_message(sender_id, ai_reply)
     return {"status": "EVENT_RECEIVED"}
 
-# --- Telegram Bot Webhook Endpoint ---
 @app.post(f"/telegram/{TELEGRAM_TOKEN}" if TELEGRAM_TOKEN else "/telegram/webhook")
 async def handle_telegram_webhook(request: Request):
     data = await request.json()
@@ -84,11 +80,9 @@ async def handle_telegram_webhook(request: Request):
         chat_id = data["message"]["chat"]["id"]
         user_text = data["message"]["text"]
         
-        # Gemini ဖြင့် စာသားထုတ်လုပ်ခြင်း
-        ai_reply = generate_ai_response(user_text)
+          ai_reply = generate_ai_response(user_text)
         
-        # Telegram သို့ စာပြန်ပို့ခြင်း
-        telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+          telegram_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         async with httpx.AsyncClient() as client:
             await client.post(telegram_url, json={"chat_id": chat_id, "text": ai_reply})
             

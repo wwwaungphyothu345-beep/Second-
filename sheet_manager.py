@@ -24,7 +24,7 @@ class SheetManager:
         self.client = gspread.authorize(self.creds)
         
         # ⚠️ အရေးကြီး - အစ်ကို့ရဲ့ Google Sheet ID အစစ်ကို ဒီနေရာမှာ ထည့်ပေးပါ
-        self.sheet = self.client.open_by_key("မင်းရဲ့_GOOGLE_SHEET_ID_ကိုဒီမှာထည့်ပါ")
+        self.sheet = self.client.open_by_key("1CJf69o5Gp_oxtoE7tDog3KPov-ylC0jc67T4XTuFlxU")
         
         worksheets = {ws.title.strip(): ws for ws in self.sheet.worksheets()}
         self.products_tab = worksheets.get("Products")

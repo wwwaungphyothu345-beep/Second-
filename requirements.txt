@@ -2,3 +2,6 @@ fastapi
 uvicorn
 google-generativeai
 httpx
+gspread
+google-auth
+

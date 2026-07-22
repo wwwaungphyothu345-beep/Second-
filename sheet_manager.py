@@ -11,9 +11,13 @@ class SheetManager:
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # Base64 အဖြစ် ပြောင်းထားသော JSON ကို ဖတ်ယူခြင်း
-        creds_b64 = os.environ.get("GOOGLE_CREDS_BASE64")
+        creds_b64 = os.environ.get("GOOGLE_CREDS_BASE64", "")
         if creds_b64:
+            # Base64 Padding အမှား ကင်းစင်စေရန် '=' အလိုအလျောက် ဖြည့်ပေးခြင်း
+            missing_padding = len(creds_b64) % 4
+            if missing_padding:
+                creds_b64 += '=' * (4 - missing_padding)
+                
             creds_json = base64.b64decode(creds_b64).decode('utf-8')
             creds_dict = json.loads(creds_json)
             credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
@@ -21,8 +25,8 @@ class SheetManager:
             credentials = Credentials.from_service_account_file("credentials.json", scopes=scopes)
             
         self.client = gspread.authorize(credentials)
-        # အစ်ကို့ရဲ့ Google Sheet ID
-        self.sheet = self.client.open_by_key("YOUR_GOOGLE_SHEET_ID_HERE")
+        # မိမိ၏ Google Sheet ID အစစ် ထည့်ရန်
+        self.sheet = self.client.open_by_key("1CJf69o5Gp_oxtoE7tDog3KPov-ylC0jc67T4XTuFlxU")
 
     def search_product(self, keyword):
         try:

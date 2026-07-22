@@ -1,68 +1,45 @@
 import os
 import json
+import base64
 import gspread
 from google.oauth2.service_account import Credentials
 
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-
 class SheetManager:
     def __init__(self):
-        # 💡 Render ရဲ့ Environment Variable ထဲက 'GOOGLE_CREDS_JSON' စာသားကို ယူဖတ်ခြင်း
-        creds_json = os.environ.get("GOOGLE_CREDS_JSON")
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
         
-        if creds_json:
-            # စာသားကို JSON format အဖြစ် ပြန်ပြောင်းပြီး အသိအမှတ်ပြုခြင်း
-            info = json.loads(creds_json)
-            self.creds = Credentials.from_service_account_info(info, scopes=SCOPES)
+        # Base64 အဖြစ် ပြောင်းထားသော JSON ကို ဖတ်ယူခြင်း
+        creds_b64 = os.environ.get("GOOGLE_CREDS_BASE64")
+        if creds_b64:
+            creds_json = base64.b64decode(creds_b64).decode('utf-8')
+            creds_dict = json.loads(creds_json)
+            credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         else:
-            # Local စမ်းသပ်မှုအတွက် credentials.json ရှိရင် ဖတ်ရန် (Fallback)
-            self.creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+            credentials = Credentials.from_service_account_file("credentials.json", scopes=scopes)
             
-        self.client = gspread.authorize(self.creds)
-        
-        # ⚠️ အရေးကြီး - အစ်ကို့ရဲ့ Google Sheet ID အစစ်ကို ဒီနေရာမှာ ထည့်ပေးပါ
-        self.sheet = self.client.open_by_key("1CJf69o5Gp_oxtoE7tDog3KPov-ylC0jc67T4XTuFlxU")
-        
-        worksheets = {ws.title.strip(): ws for ws in self.sheet.worksheets()}
-        self.products_tab = worksheets.get("Products")
-        self.cod_tab = worksheets.get("COD")
-        self.settings_tab = worksheets.get("Settings")
-        self.orders_tab = worksheets.get("Orders")
+        self.client = gspread.authorize(credentials)
+        # အစ်ကို့ရဲ့ Google Sheet ID
+        self.sheet = self.client.open_by_key("YOUR_GOOGLE_SHEET_ID_HERE")
+
+    def search_product(self, keyword):
+        try:
+            worksheet = self.sheet.sheet1
+            records = worksheet.get_all_records()
+            results = []
+            for row in records:
+                if any(keyword.lower() in str(val).lower() for val in row.values()):
+                    results.append(row)
+            return results
+        except Exception as e:
+            print(f"Sheet Search Error: {e}")
+            return []
 
     def get_bank_accounts(self):
-        if self.settings_tab:
-            return self.settings_tab.get_all_records()
-        return []
-
-    def check_cod_township(self, township_query):
-        if not self.cod_tab:
-            return {"found": False, "cod_status": "Pre-paid"}
-        records = self.cod_tab.get_all_records()
-        for r in records:
-            if township_query.lower() in str(r.get("Township", "")).lower():
-                return {
-                    "found": True,
-                    "township": r.get("Township"),
-                    "deli": r.get("Deli"),
-                    "cod_status": r.get("COD")
-                }
-        return {"found": False, "cod_status": "Pre-paid"}
-
-    def search_product(self, name_query):
-        if not self.products_tab:
+        try:
+            worksheet = self.sheet.worksheet("Bank")
+            return worksheet.get_all_records()
+        except Exception:
             return []
-        records = self.products_tab.get_all_records()
-        results = []
-        for r in records:
-            if name_query.lower() in str(r.get("Product Name", "")).lower():
-                results.append(r)
-        return results
-
-    def add_new_order(self, order_id, customer_name, phone, address, items, total_amount, status="Pending"):
-        if self.orders_tab:
-            self.orders_tab.append_row([order_id, customer_name, phone, address, items, total_amount, status])
-            return True
-        return False
